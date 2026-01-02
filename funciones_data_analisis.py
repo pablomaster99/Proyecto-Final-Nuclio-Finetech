@@ -63,7 +63,7 @@ def carga_archivos(path):
 
 # ### Funcion para leer archivos CSV o Excel.
 
-# In[3]:
+# In[ ]:
 
 
 def leer_archivo(ruta_completa):
@@ -82,22 +82,28 @@ def leer_archivo(ruta_completa):
         _, extension = os.path.splitext(ruta_completa.lower())
 
         if extension == '.csv':
-            df = pd.read_csv(ruta_completa, sep=None, engine='python') # Forzamos que python interprete el separador del .csv
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
+
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(ruta_completa, sep=None, engine='python', encoding=encoding)
+                    return df
+                except UnicodeDecodeError:
+                    continue
+
         elif extension in ('.xlsx', '.xls'):
             df = pd.read_excel(ruta_completa)
         else:
-            print("Error: Formato no compatible")
-            return None
+            raise Exception("Error: Formato no compatible")
+
 
         return df
 
     except FileNotFoundError:
-        print(f"Error: Archivo no encontrado en la ruta '{ruta_completa}'.")
-        return None
+        raise Exception(f"Error: Archivo no encontrado en la ruta '{ruta_completa}'.")
 
     except Exception as e:
-        print(f"Error inesperado: {e}")
-        return None
+        raise Exception(f"Error inesperado: {e}")
 
 
 # ### Funcion para leer varios archivos
@@ -192,6 +198,15 @@ def exploracion_datos(df):
 
 
 def exploracion_varios_dataframes(dict_data):
+    """
+    Recibe un dicionario, y muestra una exploracion inicial de cada DataFrame.
+
+    Args:
+        dict_data  (dict {str: pandas.DataFrame}): Diccionario en el qual la llave es el nombre del archivo 
+                                                   y el valor es un DataFrame con los datos que deseamos explorar.
+
+    """
+
     dict_exploracion = {}
 
     for k, v in dict_data.items():
@@ -351,7 +366,7 @@ def plotly_histograma_univariable(df,variable):
 
 # ## Transformar el notebook en un archivo .py
 
-# In[1]:
+# In[ ]:
 
 
 get_ipython().system('jupyter nbconvert --to script funciones_data_analisis.ipynb')
