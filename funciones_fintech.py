@@ -224,10 +224,3 @@ def grafico_correlacion_spearman(df,df_2,title):
     plt.show()
 
 
-# ## Transformar el notebook en un archivo .py
-
-# In[4]:
-
-
-get_ipython().system('jupyter nbconvert --to script funciones_fintech.ipynb')
-
