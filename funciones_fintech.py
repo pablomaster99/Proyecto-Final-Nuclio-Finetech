@@ -31,6 +31,7 @@ import matplotlib.patches as mpatches
 import seaborn as sns
 import plotly.express as px
 import matplotlib.ticker as mtick
+from matplotlib.ticker import PercentFormatter
 
 # Textos
 import unicodedata
@@ -40,8 +41,7 @@ import re
 # Estadistica
 from scipy import stats
 from scipy.stats import chi2_contingency
-from sklearn.preprocessing import LabelEncoder
-from statsmodels.stats.proportion import proportions_ztest
+
 
 
 
@@ -147,39 +147,60 @@ def normalizar_binario(df):
 # In[ ]:
 
 
-# Funcion para graficar heatmap y obtener chi2, p y dof y tabla de contingencia.
-def heatmap_correlation(df,df_2,columna,title,ylable):
+def cramers_v(df):
+
+    chi2, p, dof, expected = chi2_contingency(df)
+    n = df.values.sum()              
+    k = min(df.shape) - 1            
+
+    return np.sqrt(chi2 / (n * k))
+
+
+# In[ ]:
+
+
+def heatmap_correlation(df, df_2, columna, title, ylable):
 
     # Calculamos chi2, p, dof
     chi2, p, dof, expected = stats.chi2_contingency(df)
 
+    # Calculamos V de Cramer
+    V = cramers_v(df)
+
     # Creamos la figura.
     plt.figure(figsize=(10, 6))
 
-    # Creamos heatmap entre age_group y la suscripcion de un deposito.
-    sns.heatmap(
-        df,
-        annot=True,        
-        fmt='.2%',            
-        cmap='YlGnBu',        
-        cbar_kws={'label': 'Porcentaje'},
-        linewidths=0.5,
-        linecolor='gray')
+    # Normalizamos los datos para obtener el porcentaje sobre el total de filas.
+    df_heatmap = df. div(df.sum(axis=1), axis=0)
 
-    plt.title(title, 
-            fontsize=14, fontweight='bold', pad=20)
+    # Creamos heatmap
+    ax = sns.heatmap(
+        df_heatmap,
+        annot=True,
+        fmt='.2%',
+        cmap='YlGnBu',
+        cbar_kws={'label': 'Porcentaje', 'format': PercentFormatter(1)},
+        linewidths=0.5,
+        linecolor='gray'
+    )
+
+    plt.title(title, fontsize=14, fontweight='bold', pad=20)
     plt.ylabel(ylable, fontsize=12)
 
-    # Creamos un conteo y porcentaje de los indices del dataframe a graficar sobre el dataframe original
-    df_values=df_2[columna].value_counts().to_frame().transpose()
-    df_values_norm=(df_2[columna].value_counts(normalize=True)*100).to_frame().transpose()
-    print(f"chi2={chi2:.4f}, p={p:.4f}, dof={dof}")
+    # Conteos y porcentajes
+    df_values = df_2[columna]. value_counts().to_frame().transpose()
+    df_values_norm = (df_2[columna].value_counts(normalize=True) * 100).to_frame().transpose()
+
+    # Imprimimos resultados
+    print(f"chi2 = {chi2:.4f}, p = {p:.4f}, dof = {dof}")
+    print(f"V de Cramer = {V:.5f}")
     print("*" * 80)
     display(df_values)
     print("*" * 80)
     display(df_values_norm)
     print("*" * 80)
     display(df)
+
     plt.tight_layout()
     plt.show()
 
@@ -223,4 +244,11 @@ def grafico_correlacion_spearman(df,df_2,title):
     plt.tight_layout()
     plt.show()
 
+
+# ## Transformar el notebook en un archivo .py
+
+# In[1]:
+
+
+# get_ipython().system('jupyter nbconvert --to script funciones_fintech.ipynb --output-dir ..')
 

@@ -39,8 +39,8 @@ import re
 # Estadistica
 from scipy import stats
 from scipy.stats import chi2_contingency
-from sklearn.preprocessing import LabelEncoder
-from statsmodels.stats.proportion import proportions_ztest
+# from sklearn.preprocessing import LabelEncoder
+# from statsmodels.stats.proportion import proportions_ztest
 
 
 # ## Funciones de lectura de datos
