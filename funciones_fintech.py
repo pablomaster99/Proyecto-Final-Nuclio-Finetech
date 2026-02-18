@@ -32,6 +32,8 @@ import seaborn as sns
 import plotly.express as px
 import matplotlib.ticker as mtick
 from matplotlib.ticker import PercentFormatter
+from sklearn.feature_selection import mutual_info_classif
+
 
 # Textos
 import unicodedata
@@ -41,7 +43,7 @@ import re
 # Estadistica
 from scipy import stats
 from scipy.stats import chi2_contingency
-
+from itertools import combinations
 
 
 
@@ -245,10 +247,52 @@ def grafico_correlacion_spearman(df,df_2,title):
     plt.show()
 
 
+# In[ ]:
+
+
+def generar_combinaciones_de_dos(elementos):
+    return list(combinations(elementos,2))
+
+
+# In[ ]:
+
+
+def evaluar_informacion_mutua(df, variables_a_combinar,nombres_variables=None, threshold=0.05):
+    # Todos los que sean very weak o weak no nos interesaran, por eso marcaremos el threshold a 0.05
+    for j,k in variables_a_combinar:
+        df["interaccion"] = (
+            df[j].astype(str) + "_" + df[k].astype(str)
+        )
+
+        X = df["interaccion"]
+        y = df["subscribed_term_deposit"]
+
+        mi = mutual_info_classif(
+            pd.get_dummies(X),
+            y,
+            discrete_features=True
+        )
+
+        relationship_table = pd.Series(mi,index=pd.get_dummies(X).columns)
+        relationship_table = relationship_table[relationship_table > threshold]
+
+        if relationship_table.shape[0] == 0:
+            # print("No hay ninguna relacion en considerable en esta interaccion")
+            pass
+        else:
+            print()
+            if nombres_variables is not None:
+                print(nombres_variables[j] + " x " + nombres_variables[k])
+            else:
+                print(j + " x " + k)
+
+            display(relationship_table)
+
+
+
 # ## Transformar el notebook en un archivo .py
 
 # In[1]:
 
 
-# get_ipython().system('jupyter nbconvert --to script funciones_fintech.ipynb --output-dir ..')
 
