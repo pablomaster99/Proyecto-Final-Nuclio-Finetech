@@ -32,6 +32,8 @@ import seaborn as sns
 import plotly.express as px
 import matplotlib.ticker as mtick
 from matplotlib.ticker import PercentFormatter
+from sklearn.feature_selection import mutual_info_classif
+
 
 # Textos
 import unicodedata
@@ -41,7 +43,7 @@ import re
 # Estadistica
 from scipy import stats
 from scipy.stats import chi2_contingency
-
+from itertools import combinations
 
 
 
@@ -245,10 +247,87 @@ def grafico_correlacion_spearman(df,df_2,title):
     plt.show()
 
 
+# In[ ]:
+
+
+def generar_combinaciones_de_dos(elementos):
+    return list(combinations(elementos,2))
+
+
+# In[ ]:
+
+
+def evaluar_informacion_mutua(df, variables_a_combinar,nombres_variables=None, threshold=0.05):
+    # Todos los que sean very weak o weak no nos interesaran, por eso marcaremos el threshold a 0.05
+    combinaciones_relevantes = []
+
+    for j,k in variables_a_combinar:
+        df["interaccion"] = (
+            df[j].astype(str) + "_" + df[k].astype(str)
+        )
+
+        X = df["interaccion"]
+        y = df["subscribed_term_deposit"]
+
+        mi = mutual_info_classif(
+            pd.get_dummies(X),
+            y,
+            discrete_features=True
+        )
+
+        relationship_table = pd.Series(mi,index=pd.get_dummies(X).columns)
+        relationship_table = relationship_table[relationship_table > threshold]
+
+        if relationship_table.shape[0] == 0:
+            # print("No hay ninguna relacion en considerable en esta interaccion")
+            pass
+        else:
+            combinaciones_relevantes.append((j,k))
+            if nombres_variables is not None:
+                print(nombres_variables[j] + " x " + nombres_variables[k])
+            else:
+                print(j + " x " + k)
+
+            display(relationship_table)
+    return combinaciones_relevantes
+
+
+# In[ ]:
+
+
+def heatmap_multivariable(df, combinaciones, nombres_variables):
+    for j, k in combinaciones:
+        plt.figure(figsize=(10,5))
+
+        pivot = pd.pivot_table(
+            df,
+            values="subscribed_term_deposit",
+            index=j,
+            columns=k,
+            aggfunc="mean"
+        )
+
+        pivot = pivot.loc[pivot.index != "unknown", :]
+        pivot = pivot.loc[:, pivot.columns != "unknown"]
+
+        sns.heatmap(
+            pivot,
+            annot=True,
+            fmt=".2%",
+            cmap="Blues",
+            vmin=0,
+            vmax=1
+        )
+
+        plt.title(nombres_variables[j] + " x " + nombres_variables[k])
+        plt.ylabel(nombres_variables[j])
+        plt.xlabel(nombres_variables[k])
+        plt.show()
+
+
 # ## Transformar el notebook en un archivo .py
 
-# In[1]:
+# In[3]:
 
 
-# get_ipython().system('jupyter nbconvert --to script funciones_fintech.ipynb --output-dir ..')
 
